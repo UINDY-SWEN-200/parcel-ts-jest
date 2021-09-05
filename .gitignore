@@ -1,0 +1,25 @@
+# Logs
+logs
+*.log
+
+# Dependencies
+node_modules/
+
+# Coverage
+coverage
+
+# Parcel Bundler
+.cache/
+dist/
+
+# Transpiled files
+build/
+
+# VS Code
+.vscode
+!.vscode/tasks.js
+
+# Misc
+.DS_Store
+.org
+*~
