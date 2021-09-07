@@ -1,70 +1,130 @@
+/*
+ ** Very simple mock implmentation of an even input dialog.
+ */
 
-export function applyUI(elID: string, html: string) {
-    //
-    // Utility function that repalces HTML within an element
-    //
-    const el = document.getElementById(elID)
-    if (el) {
-        el.innerHTML = html
-    }
+export interface DB<T> {
+  put(item: T): void
+  length: number
 }
 
-export function attachClickHandler(elID: string, handler: (e: MouseEvent) => void) {
-    //
-    // Utility function that attaches an event handler to an element
-    //
-    const el = document.getElementById(elID)
-    if (el) {
-        el.addEventListener("click", handler)
-    }
+export interface Event {
+  start: Date
+  end: Date
+  title: string
+  description: string
+}
+
+export class DumbDB implements DB<Event> {
+  private events: Event[] = []
+
+  put(event: Event) {
+    this.events.push(event)
+  }
+
+  get length() {
+    return this.events.length
+  }
+}
+
+export function applyUI(elID: string, html: string) {
+  //
+  // Utility function that repalces HTML within an element
+  //
+  const el = document.getElementById(elID)
+  if (el) {
+    el.innerHTML = html
+  }
+}
+
+export function attachClickHandler(
+  elID: string,
+  handler: (e: MouseEvent) => void
+) {
+  //
+  // Utility function that attaches an event handler to an element
+  //
+  const el = document.getElementById(elID)
+  if (el) {
+    el.addEventListener("click", handler)
+  }
 }
 
 export function checkDates(start: Date, end: Date): boolean {
-    //
-    // Utility function that checks if a start date is before an end date
-    //
-    return start.getTime() <= end.getTime()
+  //
+  // Utility function that checks if a start date is before an end date
+  //
+  return start.getTime() <= end.getTime()
 }
 
-export function handleDialogClick(e: MouseEvent) {
-    //
-    // Event handler for the button
-    //
-    e.preventDefault()
-    console.log("submit -> " + new Date().toISOString())
+export function handleDialogClick(e: MouseEvent, db: DB<Event>) {
+  //
+  // Event handler for the button
+  //
+  e.preventDefault()
+  console.log("submit -> " + new Date().toISOString())
 
-    const startDateInput = document.getElementById("start") as HTMLInputElement
-    const endDateInput = document.getElementById("end") as HTMLInputElement
+  let datesOK = false
+  let start: Date | null = null
+  let end: Date | null = null
+  let title = ""
+  let description = ""
 
-    if (startDateInput && endDateInput) {
-        const start = new Date(startDateInput.value)
-        const end = new Date(endDateInput.value)
-        const datesOK = checkDates(start, end)
-        console.log("Found two dates:" + datesOK)
-    } else {
-        console.log("No dates inputs found")
-        throw new Error("No dates inputs found")
-    }
+  const startDateInput = document.getElementById("start") as HTMLInputElement
+  const endDateInput = document.getElementById("end") as HTMLInputElement
+  const descriptionInput = document.getElementById(
+    "description"
+  ) as HTMLInputElement
+  const titleInput = document.getElementById("title") as HTMLInputElement
 
-    
+  if (startDateInput && endDateInput) {
+    start = new Date(startDateInput.value)
+    end = new Date(endDateInput.value)
+    datesOK = checkDates(start, end)
+    console.log("Found two dates:" + datesOK)
+  } else {
+    throw new Error("No dates inputs found")
+  }
+
+  if (descriptionInput && titleInput && datesOK) {
+    description = descriptionInput.value
+    title = titleInput.value
+  }
+
+  if (start && end && datesOK) {
+    db.put({
+      start,
+      end,
+      title,
+      description,
+    })
+  }
 }
 
-const today =  new Date()
+const today = new Date()
 
-export function renderEventDialog( begin: Date = today, end: Date = today, title: string = "A new event", description: string = "") {
-    //
-    // Renders the UI
-    //
-    const html = `
+export function renderEventDialog(
+  begin: Date = today,
+  end: Date = today,
+  title: string = "A new event",
+  description: string = ""
+) {
+  //
+  // Renders the UI
+  //
+  const html = `
     <form action="#" id="event-form">
     <h1> Create Event Dialog</h1>
     <h2>Title: <input type="text" id="title" name="event-title" value="${title}"/></h2>
     <label for="start">Start Date:</label>
-    <input type="date" id="start" name="event-start" value="${begin.toISOString().slice(0, 10)}"/>
+    <input type="date" id="start" name="event-start" value="${begin
+      .toISOString()
+      .slice(0, 10)}"/>
     <br/>
     <br/>
     <label for="end">End Date: </label>
-    <input type="date" id="end" name="event-end" value="${end.toISOString().slice(0, 10)}"/>
+    <input type="date" id="end" name="event-end" value="${end
+      .toISOString()
+      .slice(0, 10)}"/>
     <br/>
     <br/>
     <label for="description">Description:</label>
@@ -74,12 +134,13 @@ export function renderEventDialog( begin: Date = today, end: Date = today, title
     <input type="submit" value="Create Event" id="add-event"/>
     </form>
     `
-    return html
+  return html
 }
 
 export function buildUI() {
-    applyUI("app", renderEventDialog())
-    attachClickHandler("add-event",handleDialogClick)
+  let aDb = new DumbDB()
+  applyUI("app", renderEventDialog())
+  attachClickHandler("add-event", (e) => handleDialogClick(e, aDb))
 }
 
 buildUI()
