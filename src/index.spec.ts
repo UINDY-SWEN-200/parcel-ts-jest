@@ -6,7 +6,7 @@ import {
   applyUI,
   attachClickHandler,
   checkDates,
-  handleDialogClick,
+  storeDialogData,
   renderEventDialog,
   buildUI,
   DumbDB,
@@ -35,7 +35,10 @@ test("check for UI handling", () => {
   let aDb = new DumbDB()
   const html = renderEventDialog()
   applyUI("app", html)
-  attachClickHandler("add-event", (e) => handleDialogClick(e, aDb))
+  attachClickHandler("add-event", (e) => {
+    e.preventDefault()
+    storeDialogData(aDb)
+  })
   let button = document.getElementById("add-event")
   if (button) {
     button.click()
