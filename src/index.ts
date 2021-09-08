@@ -113,7 +113,7 @@ export function renderEventDialog(
   //
   const html = `
     <form action="#" id="event-form">
-    <h1> Create Event Dialog</h1>
+    <h1>Create Event (Dialog)</h1>
     <h2>Title: <input type="text" id="title" name="event-title" value="${title}"/></h2>
     <label for="start">Start Date:</label>
     <input type="date" id="start" name="event-start" value="${begin
