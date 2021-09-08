@@ -56,47 +56,46 @@ export function checkDates(start: Date, end: Date): boolean {
   return start.getTime() <= end.getTime()
 }
 
-export function handleDialogClick(e: MouseEvent, db: DB<Event>) {
+export function getDialogInfo(doc: Document): Event {
   //
-  // Event handler for the button
-  //
-  e.preventDefault()
-  console.log("submit -> " + new Date().toISOString())
-
-  let datesOK = false
   let start: Date | null = null
   let end: Date | null = null
   let title = ""
   let description = ""
 
-  const startDateInput = document.getElementById("start") as HTMLInputElement
-  const endDateInput = document.getElementById("end") as HTMLInputElement
-  const descriptionInput = document.getElementById(
-    "description"
-  ) as HTMLInputElement
-  const titleInput = document.getElementById("title") as HTMLInputElement
+  const startDateInput = doc.getElementById("start") as HTMLInputElement
+  const endDateInput = doc.getElementById("end") as HTMLInputElement
+  const descriptionInput = doc.getElementById("description") as HTMLInputElement
+  const titleInput = doc.getElementById("title") as HTMLInputElement
 
   if (startDateInput && endDateInput) {
     start = new Date(startDateInput.value)
     end = new Date(endDateInput.value)
-    datesOK = checkDates(start, end)
-    console.log("Found two dates:" + datesOK)
   } else {
     throw new Error("No dates inputs found")
   }
 
-  if (descriptionInput && titleInput && datesOK) {
+  if (descriptionInput && titleInput) {
     description = descriptionInput.value
     title = titleInput.value
+  } else {
+    throw new Error("No description or title inputs found")
   }
 
-  if (start && end && datesOK) {
-    db.put({
-      start,
-      end,
-      title,
-      description,
-    })
+  return { start, end, title, description }
+}
+
+export function storeDialogData(db: DB<Event>) {
+  //
+  // Validate and store dialog data
+  //
+  const event = getDialogInfo(document)
+  const datesOK = checkDates(event.start, event.end)
+
+  if (datesOK) {
+    db.put(event)
+  } else {
+    throw new Error("Dates are out of order")
   }
 }
 
@@ -140,7 +139,14 @@ export function renderEventDialog(
 export function buildUI() {
   let aDb = new DumbDB()
   applyUI("app", renderEventDialog())
-  attachClickHandler("add-event", (e) => handleDialogClick(e, aDb))
+  attachClickHandler("add-event", (e) => {
+    e.preventDefault()
+    try {
+      storeDialogData(aDb)
+    } catch (e) {
+      alert((e as Error).message)
+    }
+  })
 }
 
 buildUI()
