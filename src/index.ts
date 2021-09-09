@@ -102,28 +102,33 @@ export function storeDialogData(db: DB<Event>) {
 const today = new Date()
 
 export function renderEventDialog(
-  begin: Date = today,
+  start: Date = today,
   end: Date = today,
   title: string = "A new event",
-  description: string = ""
+  description: string = "",
+  errors: { [key: string]: string } = {}
 ) {
   //
   // Renders the UI
   //
+
+  const startError = errors.start || ""
+  const endError = errors.end || ""
+
   const html = `
     <form action="#" id="event-form">
     <h1>Create Event (Dialog)</h1>
     <h2>Title: <input type="text" id="title" name="event-title" value="${title}"/></h2>
     <label for="start">Start Date:</label>
-    <input type="date" id="start" name="event-start" value="${begin
-      .toISOString()
-      .slice(0, 10)}"/>
+    <input type="date" id="start" class="${startError}" name="event-start" value="${start
+    .toISOString()
+    .slice(0, 10)}"/>
     <br/>
     <br/>
     <label for="end">End Date: </label>
-    <input type="date" id="end" name="event-end" value="${end
-      .toISOString()
-      .slice(0, 10)}"/>
+    <input type="date" id="end" name="event-end" class="${endError}" value="${end
+    .toISOString()
+    .slice(0, 10)}"/>
     <br/>
     <br/>
     <label for="description">Description:</label>
@@ -136,15 +141,48 @@ export function renderEventDialog(
   return html
 }
 
-export function buildUI() {
-  let aDb = new DumbDB()
+export function defaultErrorHandler(e: Error, aDb: DB<Event>) {
+  // A bit of a hack, but we'll fix it with a "real" framwork later
+  if (e.message.includes("order")) {
+    let event = getDialogInfo(document)
+    applyUI(
+      "app",
+      renderEventDialog(
+        event.start,
+        event.end,
+        event.title,
+        event.description,
+        { start: "errorHint", end: "errorHint" }
+      )
+    )
+    attachClickHandler("add-event", (e) => {
+      e.preventDefault()
+      try {
+        storeDialogData(aDb)
+        alert("Data store successfully!")
+      } catch (e) {
+        defaultErrorHandler(e as Error, aDb)
+      }
+    })
+  } else {
+    alert(e.message)
+  }
+}
+
+export function buildUI(
+  aDb: DB<Event> = new DumbDB(),
+  errorHandler:
+    | ((e: Error, aDb: DB<Event>) => void)
+    | null = defaultErrorHandler
+) {
   applyUI("app", renderEventDialog())
   attachClickHandler("add-event", (e) => {
     e.preventDefault()
     try {
       storeDialogData(aDb)
+      alert("Data stored!")
     } catch (e) {
-      alert((e as Error).message)
+      if (errorHandler) errorHandler(e as Error, aDb)
     }
   })
 }
