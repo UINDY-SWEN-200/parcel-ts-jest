@@ -1,14 +1,11 @@
 import "@testing-library/jest-dom"
 
 import {
-  DB,
-  Event,
   applyUI,
   attachClickHandler,
   checkDates,
   storeDialogData,
   renderEventDialog,
-  buildUI,
   DumbDB,
 } from "."
 
